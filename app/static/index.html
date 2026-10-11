@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CertForge • Bulk Certificate Generator Studio</title>
+  <meta name="description" content="High performance bulk certificate generator backend with async processing, vector PDF rendering, and verification portal.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css?v=2.2">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="/" class="brand">
+        <div class="brand-icon">🎓</div>
+        <div class="brand-text">
+          <h1>CertForge</h1>
+          <p>Bulk Certificate Studio</p>
+        </div>
+      </a>
+      <div class="nav-links">
+        <div class="system-status">
+          <span class="status-dot"></span>
+          <span>API Online (FastAPI)</span>
+        </div>
+        <a href="/docs" target="_blank" class="nav-link" id="nav-api-docs">
+          <span>⚡ Interactive Swagger Docs</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-wrapper">
+
+    <!-- Navigation Tabs -->
+    <div class="tabs-header">
+      <button class="tab-btn active" id="tab-btn-generator" onclick="switchTab('generator')">🚀 Generate Certificates</button>
+      <button class="tab-btn" id="tab-btn-monitor" onclick="switchTab('monitor')">📊 Active Jobs & History</button>
+      <button class="tab-btn" id="tab-btn-verify" onclick="switchTab('verify')">🔍 Credential Verification</button>
+    </div>
+
+    <!-- TAB 1: GENERATOR -->
+    <div class="tab-pane active" id="tab-generator">
+      <div class="grid-2">
+        
+        <!-- Left: Event & Certificate Template Settings -->
+        <div class="card">
+          <h2 class="card-title">📜 Event & Certificate Settings</h2>
+          <p class="card-subtitle">Configure organization branding and certification metadata.</p>
+
+          <div class="form-group">
+            <label class="form-label" for="input-event-title">Course / Event Title *</label>
+            <input type="text" id="input-event-title" class="form-control" placeholder="e.g. Full-Stack AI Engineering Masterclass" value="Full-Stack AI Engineering Masterclass">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="input-issuer">Issuing Organization *</label>
+            <input type="text" id="input-issuer" class="form-control" placeholder="e.g. Global Academy of Technology" value="Global Academy of Technology">
+          </div>
+
+          <div class="grid-2" style="gap: 1rem; margin-bottom: 0;">
+            <div class="form-group">
+              <label class="form-label" for="input-signatory-name">Signatory Name</label>
+              <input type="text" id="input-signatory-name" class="form-control" placeholder="e.g. Dr. Eleanor Vance" value="Dr. Eleanor Vance">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="input-signatory-title">Signatory Title</label>
+              <input type="text" id="input-signatory-title" class="form-control" placeholder="e.g. Director of Certification" value="Director of Certification">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="input-issue-date">Date of Issuance</label>
+            <input type="text" id="input-issue-date" class="form-control" placeholder="e.g. October 11, 2026" value="October 11, 2026">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Predefined Certificate Theme</label>
+            <div class="theme-options">
+              <div class="theme-card selected" id="theme-gold" onclick="selectTheme('classic_gold')">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #0f172a, #d97706);"></div>
+                <div class="theme-name">Classic Gold</div>
+              </div>
+              <div class="theme-card" id="theme-sapphire" onclick="selectTheme('sapphire_modern')">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #1e3a8a, #3b82f6);"></div>
+                <div class="theme-name">Sapphire Tech</div>
+              </div>
+              <div class="theme-card" id="theme-emerald" onclick="selectTheme('emerald_academic')">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #064e3b, #10b981);"></div>
+                <div class="theme-name">Emerald Mint</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Recipients Input (CSV & Table) -->
+        <div class="card">
+          <div class="recipients-toolbar">
+            <div>
+              <h2 class="card-title">👥 Recipients (<span id="recipients-count">4</span>)</h2>
+              <p class="card-subtitle" style="margin-bottom: 0;">Add recipients manually or upload a CSV file.</p>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+              <button class="btn btn-amber btn-sm" id="btn-load-sample" onclick="loadSampleData()">
+                ✨ Load Demo CSV
+              </button>
+              <button class="btn btn-indigo btn-sm" id="btn-add-row" onclick="addRecipientRow()">
+                ➕ Add Row
+              </button>
+            </div>
+          </div>
+
+          <!-- CSV Dropzone -->
+          <div class="dropzone" id="csv-dropzone" onclick="document.getElementById('csv-file-input').click()">
+            <div class="dropzone-icon">📁</div>
+            <div style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem;">Drop recipient CSV here or browse</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary);">Columns: name, email, grade, completion_date</div>
+            <input type="file" id="csv-file-input" accept=".csv" style="display: none;" onchange="handleCSVUpload(event)">
+          </div>
+
+          <!-- Interactive Recipients Table -->
+          <div class="table-responsive">
+            <table id="recipients-table">
+              <thead>
+                <tr>
+                  <th style="width: 32%;">Name *</th>
+                  <th style="width: 40%;">Email *</th>
+                  <th style="width: 20%;">Grade/Meta</th>
+                  <th style="width: 8%;"></th>
+                </tr>
+              </thead>
+              <tbody id="recipients-tbody">
+                <!-- Dynamically populated rows -->
+              </tbody>
+            </table>
+          </div>
+
+          <button class="btn btn-primary" id="btn-submit-job" style="width: 100%; justify-content: center; padding: 0.9rem;" onclick="submitBulkJob()">
+            ⚡ Generate Bulk Certificates Now
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Live Job Tracker Section (Appears after submission or selection) -->
+      <div id="live-job-section" class="card progress-card" style="display: none;">
+        <div class="progress-header">
+          <div>
+            <div class="job-meta-badges">
+              <span id="job-status-badge" class="badge badge-processing">Processing</span>
+              <span style="font-size: 0.85rem; color: var(--text-secondary);">Job ID: <code id="job-id-text" style="color: var(--accent-blue);">...</code></span>
+            </div>
+            <h3 id="job-event-title-display" style="font-size: 1.3rem; margin-top: 0.5rem;">Event Title</h3>
+          </div>
+          <div style="display: flex; gap: 0.75rem;">
+            <button class="btn btn-secondary btn-sm" id="btn-refresh-job" onclick="pollJobStatusManual()">
+              🔄 Refresh
+            </button>
+            <a href="#" class="btn btn-success btn-sm" id="btn-download-all-zip" style="display: none;" download>
+              📦 Download All (.ZIP)
+            </a>
+          </div>
+        </div>
+
+        <!-- Metric Grid -->
+        <div class="progress-stats-grid">
+          <div class="stat-box stat-total">
+            <div class="stat-num" id="stat-total" style="color: #2563eb;">0</div>
+            <div class="stat-label">Total Recipients</div>
+          </div>
+          <div class="stat-box stat-processed">
+            <div class="stat-num" id="stat-processed" style="color: #4f46e5;">0</div>
+            <div class="stat-label">Processed</div>
+          </div>
+          <div class="stat-box stat-succeeded">
+            <div class="stat-num" id="stat-succeeded" style="color: #059669;">0</div>
+            <div class="stat-label">Succeeded</div>
+          </div>
+          <div class="stat-box stat-failed">
+            <div class="stat-num" id="stat-failed" style="color: #e11d48;">0</div>
+            <div class="stat-label">Failed</div>
+          </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" id="progress-bar-fill"></div>
+        </div>
+
+        <!-- Results Table -->
+        <h4 style="font-size: 1rem; margin-bottom: 0.75rem;">Individual Certificates Breakdown:</h4>
+        <div class="table-responsive" style="max-height: 400px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Recipient</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Actions</th>
+                <th>Error Details</th>
+              </tr>
+            </thead>
+            <tbody id="job-certs-tbody">
+              <!-- Populated via polling -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TAB 2: MONITOR & HISTORY -->
+    <div class="tab-pane" id="tab-monitor">
+      <div class="card">
+        <div class="recipients-toolbar">
+          <div>
+            <h2 class="card-title">📋 Generation Job History</h2>
+            <p class="card-subtitle" style="margin-bottom: 0;">View all recent bulk generation runs and inspect outcomes.</p>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="fetchJobHistory()">
+            🔄 Refresh List
+          </button>
+        </div>
+
+        <div class="table-responsive" style="max-height: 500px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Job ID</th>
+                <th>Event Title</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Success / Total</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="history-tbody">
+              <tr>
+                <td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 2rem;">Loading jobs history...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: CREDENTIAL VERIFICATION -->
+    <div class="tab-pane" id="tab-verify">
+      <div class="card" style="max-width: 650px; margin: 0 auto;">
+        <h2 class="card-title">🔍 Public Credential Verification</h2>
+        <p class="card-subtitle">Verify the authenticity of any certificate issued by this system.</p>
+
+        <div class="form-group">
+          <label class="form-label" for="input-verify-id">Certificate / Credential ID</label>
+          <div style="display: flex; gap: 0.75rem;">
+            <input type="text" id="input-verify-id" class="form-control" placeholder="Enter UUID (e.g. 1a2b3c4d...)">
+            <button class="btn btn-primary" onclick="handleManualVerify()">Verify</button>
+          </div>
+        </div>
+
+        <div id="verify-result-box" style="display: none; margin-top: 1.5rem;">
+          <!-- Dynamically populated verification card -->
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- PDF Preview Modal -->
+  <div class="modal-backdrop" id="preview-modal" onclick="closePreviewModal(event)">
+    <div class="modal-container" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 id="modal-title" style="font-size: 1.1rem;">Certificate Preview</h3>
+        <div style="display: flex; gap: 0.5rem;">
+          <a href="#" target="_blank" id="modal-new-tab" class="btn btn-secondary btn-sm">↗ Open in Tab</a>
+          <button class="btn btn-secondary btn-sm" onclick="closePreviewModal()">✕ Close</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <iframe id="modal-iframe" src="about:blank"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Footer -->
+  <footer>
+    <p>CertForge Bulk Certificate Generation Engine • Built with FastAPI, SQLAlchemy & ReportLab Vector Graphics</p>
+  </footer>
+
+  <script src="/static/js/app.js?v=2.2"></script>
+</body>
+</html>

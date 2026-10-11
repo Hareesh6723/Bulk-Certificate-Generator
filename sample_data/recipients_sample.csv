@@ -1,0 +1,7 @@
+name,email,grade,completion_date
+Alice Johnson,alice.johnson@example.com,Distinction,2026-10-10
+Bob Smith,bob.smith@example.com,Merit,2026-10-10
+Carol Williams,carol.williams@example.com,Excellence,2026-10-10
+David Brown,invalid-email-format,Pass,2026-10-10
+Elena Rostova,elena.rostova@example.com,Honors,2026-10-10
+Franklin Lee,franklin.lee@example.com,Distinction,2026-10-10
